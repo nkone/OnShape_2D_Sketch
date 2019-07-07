@@ -5,8 +5,8 @@
 #                                                     +:+ +:+         +:+      #
 #    By: phtruong <marvin@42.fr>                    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2019/07/07 13:27:00 by phtruong          #+#    #+#              #
-#    Updated: 2019/07/07 13:27:23 by phtruong         ###   ########.fr        #
+#    Created: 2019/07/07 16:28:45 by phtruong          #+#    #+#              #
+#    Updated: 2019/07/07 16:29:22 by phtruong         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -34,194 +34,139 @@ export const myFeature = defineFeature(function(context is Context, id is Id, de
         isLength(definition.slot3, { (millimeter) : [1, 20, 2000] } as LengthBoundSpec);
     }
     {
-        // Define the function's action
-        // First extract numbers from input dimensions
+        // Extract numbers from input dimensions
         var width is number = definition.width / millimeter;
         var offset is number = definition.mirrorOffset / millimeter;
-        var side_offset is number = definition.slotFromSide / millimeter;
-        var slot_dia is number = definition.slotDia / millimeter;
-        var slot1_offset is number = definition.slot1 / millimeter;
-        var slot2_offset is number = definition.slot2 / millimeter;
-        var slot3_offset is number = definition.slot3 / millimeter;
-        // Set global variables for access
-        setVariable(context, "b_width", width);
-        setVariable(context, "offset", offset);
-        setVariable(context, "side_offset", side_offset);
-        setVariable(context, "slot_dia", slot_dia);
-        setVariable(context, "slot1_off", slot1_offset);
-        setVariable(context, "slot2_off", slot2_offset);
-        setVariable(context, "slot3_off", slot3_offset);
+        var sideOffset is number = definition.slotFromSide / millimeter;
+        var slotDia is number = definition.slotDia / millimeter;
+        var slotOneOffset is number = definition.slot1 / millimeter;
+        var slotTwoOffset is number = definition.slot2 / millimeter;
+        var slotThreeOffset is number = definition.slot3 / millimeter;
+        // Set global variables for slots offset
+        setVariable(context, "slotOneOff", slotOneOffset);
+        setVariable(context, "slotTwoOff", slotTwoOffset);
+        setVariable(context, "slotThreeOff", slotThreeOffset);
         //Sketch the main image
-        sketchBase(context, id);
+        sketchBase(context, id, width, offset, sideOffset, slotDia);
     });
-
+    /*
+    ** function constructionLength:
+    ** Find the construction length for to construct the slot
+    ** Parameters:
+    ** [width] is length of the plate
+    ** [offsetX] is the x offset of the mirror line from the origin (0,0)
+    ** [slotOffset] is the slot distance below the (0, width)
+    ** [slotDia] is the slot diameter for all slots
+    ** [sideOffset] is the slot offset from the side
+    ** Return: a number (constructionLength)
+    */
+    function constructionLength(width is number, offsetX is number, slotOffset is number, slotDia is number, sideOffset is number)
+    {
+        var constructLength is number = width - (slotOffset + (offsetX) + ((slotDia/2)/sin(45 * degree)) + sideOffset);
+        return constructLength;
+    }
     /*
     ** function sketchBase:
     ** Recreate the 2D sketch in FeatureScript for faster changing dimension of the sketch via user inputs.
+    ** Parameters:
+    ** [context] is Context (built in data structure)
+    ** [id] is Id (built in data structure)
+    ** [width] is length of the plate
+    ** [offset] is mirror offset from the center diagonal of the plate
+    ** [sideOffset] is the slot offset from the side
+    ** [slotDia] is slot diameter for all slots
     ** Default unit: millimeter
     ** Functionality: Changes in FeatureScript allows faster visualization than changing variables in normal sketch
     */
-    function sketchBase(context is Context, id is Id)
+    function sketchBase(context is Context, id is Id, width is number, offset is number, sideOffset is number, slotDia is number)
     {
-        var base_sketch is Sketch = newSketch(context, id + "base", {
+        var baseSketch is Sketch = newSketch(context, id + "base", {
                 "sketchPlane" : qCreatedBy(makeId("Top"), EntityType.FACE)
         });
-        var width is number = getVariable(context, "b_width");
-        var offset is number = getVariable(context, "offset");
         // By dividing the offset (distance between the 45 degrees center and the tangent offset) to sin(45), we can get the x distance from the vertex.
-        var offset_x is number = offset/sin(45 * degree);
-        // This is the side_offset for the slots from the side
-        var side_offset is number = getVariable(context, "side_offset");
-        var slot_dia is number = getVariable(context, "slot_dia");
-        // Slot distances from one another, will break the image if the diameter is more than the offset.
-        var slot1_offset = getVariable(context, "slot1_off");
-        var slot2_offset = slot1_offset+getVariable(context, "slot2_off");
-        var slot3_offset = slot2_offset+getVariable(context, "slot3_off");
-        // Calculation for tangent constraints of the slot to the mirror offset, it's critical the find the construction line lengths, since there are currently no documentions on how to use skConstraint properly.
-        var slot1_construct_length is number = width - (slot1_offset + (offset_x) + ((slot_dia/2)/sin(45 * degree)) + side_offset);
-        var slot2_construct_length is number = width - (slot2_offset + (offset_x) + ((slot_dia/2)/sin(45 * degree)) + side_offset);
-        var slot3_construct_length is number = width - (slot3_offset + (offset_x) + ((slot_dia/2)/sin(45 * degree)) + side_offset);
-        
+        var offsetX is number = offset/sin(45 * degree);
+        var slotOneOffset = getVariable(context, "slotOneOff");
+        var slotTwoOffset = slotOneOffset+getVariable(context, "slotTwoOff");
+        var slotThreeOffset = slotTwoOffset+getVariable(context, "slotThreeOff");
         // Sketch the base and contructions for the slots
-        skRectangle(base_sketch, "base", {
+        skRectangle(baseSketch, "base", {
                 "firstCorner" : vector(0, 0) * millimeter,
                 "secondCorner" : vector(width, width) * millimeter
         });
-        skLineSegment(base_sketch, "mirror", {
+        skLineSegment(baseSketch, "mirror", {
                 "start" : vector(0, width) * millimeter,
                 "end" : vector(width, 0) * millimeter,
                 "construction": true
         });
-        skLineSegment(base_sketch, "offset", {
-                "start" : vector(offset_x, width) * millimeter,
-                "end" : vector(width, offset_x) * millimeter,
+        skLineSegment(baseSketch, "offset", {
+                "start" : vector(offsetX, width) * millimeter,
+                "end" : vector(width, offsetX) * millimeter,
                 "construction" : true
         });
-        skLineSegment(base_sketch, "first_slot_construction", {
-                "start" : vector(width-side_offset, width-slot1_offset) * millimeter,
-                "end" : vector(width-side_offset-slot1_construct_length, width-slot1_offset) * millimeter,
+        sketchSlot(context, id, baseSketch, width, offsetX, slotOneOffset, slotDia, sideOffset, 1);
+        sketchSlot(context, id, baseSketch, width, offsetX, slotTwoOffset, slotDia, sideOffset, 2);
+        sketchSlot(context, id, baseSketch, width, offsetX, slotThreeOffset, slotDia, sideOffset, 3);
+        skSolve(baseSketch);
+    }
+    /*
+    ** function sketchSlot:
+    ** Sketches the slots tangent to the mirror line
+    ** Parameters:
+    ** [context] is Context (built in data structure)
+    ** [id] is Id (built in data structure)
+    ** [slot] is Sketch (variable for a sketch in FS)
+    ** [offsetX] is the x offset of the mirror line from the origin (0,0)
+    ** [slotOffset] is the slot distance below the (0, width)
+    ** [slotDia] is the slot diameter
+    ** [sideOffset] is the slot offset from the side of the plate
+    ** [idx] is index for slot number
+    ** Default unit: millimeter
+    ** Functionality: Can be resuse to draw mirror slots across a 45 degree diagonal offset
+    */
+    function sketchSlot(context is Context, id is Id, slot is Sketch, width is number, offsetX is number, slotOffset is number, slotDia is number, sideOffset is number, idx is number)
+    {
+        var constructLength is number= constructionLength(width, offsetX, slotOffset, slotDia, sideOffset);
+        skLineSegment(slot, "slot_construction" ~ idx, {
+                "start" : vector(width-sideOffset, width-slotOffset) * millimeter,
+                "end" : vector(width-sideOffset-constructLength, width-slotOffset) * millimeter,
                 "construction" : true
         });
-        skLineSegment(base_sketch, "second_slot_construction", {
-                "start" : vector(width-side_offset, width-slot2_offset) * millimeter,
-                "end" : vector(width-side_offset-slot2_construct_length, width-slot2_offset) * millimeter,
-                "construction" : true
+        skLineSegment(slot, "line_bottom" ~ idx, {
+                "start" : vector(width-sideOffset, width-(slotOffset-(slotDia/2))) * millimeter,
+                "end" : vector(width-sideOffset-constructLength, width-(slotOffset-(slotDia/2))) * millimeter
         });
-        skLineSegment(base_sketch, "third_slot_construction", {
-                "start" : vector(width-side_offset, width-slot3_offset) * millimeter,
-                "end" : vector(width-side_offset-slot3_construct_length, width-slot3_offset) * millimeter,
-                "construction" : true
+        skLineSegment(slot, "line_top" ~ idx, {
+                "start" : vector(width-sideOffset, width-(slotOffset+(slotDia/2))) * millimeter,
+                "end" : vector(width-sideOffset-constructLength, width-(slotOffset+(slotDia/2))) * millimeter
         });
-        
-        // Sketch the lines then the arcs for each slot tangent to the mirror offset
-        skLineSegment(base_sketch, "line1_bottom", {
-                "start" : vector(width-side_offset, width-(slot1_offset-(slot_dia/2))) * millimeter,
-                "end" : vector(width-side_offset-slot1_construct_length, width-(slot1_offset-(slot_dia/2))) * millimeter
+        skArc(slot, "slot_arc_left" ~ idx, {
+                "start" : vector(width-sideOffset-constructLength, width-(slotOffset-(slotDia/2))) * millimeter,
+                "mid" : vector(width-sideOffset-(constructLength+(slotDia/2)), width-slotOffset) * millimeter,
+                "end" : vector(width-sideOffset-constructLength, width-(slotOffset+(slotDia/2))) * millimeter
         });
-        skLineSegment(base_sketch, "line1_top", {
-                "start" : vector(width-side_offset, width-(slot1_offset+(slot_dia/2))) * millimeter,
-                "end" : vector(width-side_offset-slot1_construct_length, width-(slot1_offset+(slot_dia/2))) * millimeter
+        skArc(slot, "slot_arc_right" ~ idx, {
+                "start" : vector(width-sideOffset, width-(slotOffset-(slotDia/2))) * millimeter,
+                "mid" : vector(width-sideOffset+(slotDia/2), width-slotOffset) * millimeter,
+                "end" : vector(width-sideOffset, width-(slotOffset+(slotDia/2))) * millimeter
         });
-        skArc(base_sketch, "slot1_arc_left", {
-                "start" : vector(width-side_offset-slot1_construct_length, width-(slot1_offset-(slot_dia/2))) * millimeter,
-                "mid" : vector(width-side_offset-(slot1_construct_length+(slot_dia/2)), width-slot1_offset) * millimeter,
-                "end" : vector(width-side_offset-slot1_construct_length, width-(slot1_offset+(slot_dia/2))) * millimeter
+        skLineSegment(slot, "line_mirror_left" ~ idx, {
+                "start" : vector(slotOffset-(slotDia/2), sideOffset) * millimeter,
+                "end" : vector(slotOffset-(slotDia/2), sideOffset+constructLength) * millimeter
         });
-        skArc(base_sketch, "slot1_arc_right", {
-                "start" : vector(width-side_offset, width-(slot1_offset-(slot_dia/2))) * millimeter,
-                "mid" : vector(width-side_offset+(slot_dia/2), width-slot1_offset) * millimeter,
-                "end" : vector(width-side_offset, width-(slot1_offset+(slot_dia/2))) * millimeter
+        skLineSegment(slot, "line_mirror_right" ~ idx, {
+                "start" : vector(slotOffset-(slotDia/2)+slotDia, sideOffset) * millimeter,
+                "end" : vector(slotOffset-(slotDia/2)+slotDia, sideOffset+constructLength) * millimeter
         });
-        skLineSegment(base_sketch, "line2_top", {
-                "start" : vector(width-side_offset, width-slot2_offset+(slot_dia/2)) * millimeter,
-                "end" : vector(width-side_offset-slot2_construct_length, width-slot2_offset+(slot_dia/2)) * millimeter
+        skArc(slot, "slot_arc_mirror_bot" ~ idx, {
+                "start" : vector(slotOffset-(slotDia/2), sideOffset) * millimeter,
+                "mid" : vector(slotOffset-(slotDia/2)+(slotDia/2), sideOffset-(slotDia/2)) * millimeter,
+                "end" : vector(slotOffset-(slotDia/2)+slotDia, sideOffset) * millimeter
         });
-        skLineSegment(base_sketch, "line2_bottom", {
-                "start" : vector(width-side_offset, width-slot2_offset-(slot_dia/2)) * millimeter,
-                "end" : vector(width-side_offset-slot2_construct_length, width-slot2_offset-(slot_dia/2)) * millimeter
+        skArc(slot, "slot_arc_mirror_top" ~ idx, {
+                "start" : vector(slotOffset-(slotDia/2), sideOffset+constructLength) * millimeter,
+                "mid" : vector(slotOffset-(slotDia/2)+(slotDia/2), sideOffset+constructLength+(slotDia/2)) * millimeter,
+                "end" : vector(slotOffset-(slotDia/2)+slotDia, sideOffset+constructLength) * millimeter
         });
-        skArc(base_sketch, "slot2_arc_left", {
-                "start" : vector(width-side_offset-slot2_construct_length, width-slot2_offset-(slot_dia/2)) * millimeter,
-                "mid" : vector(width-side_offset-(slot2_construct_length+(slot_dia/2)), width-slot2_offset) * millimeter,
-                "end" : vector(width-side_offset-slot2_construct_length, width-slot2_offset+(slot_dia/2)) * millimeter
-        });
-        skArc(base_sketch, "slot2_arc_right", {
-                "start" : vector(width-side_offset, width-slot2_offset-(slot_dia/2)) * millimeter,
-                "mid" : vector(width-side_offset+(slot_dia/2), width-slot2_offset) * millimeter,
-                "end" : vector(width-side_offset, width-slot2_offset+(slot_dia/2)) * millimeter
-        });
-        skLineSegment(base_sketch, "line3_top", {
-                "start" : vector(width-side_offset, width-slot3_offset+(slot_dia/2)) * millimeter,
-                "end" : vector(width-side_offset-slot3_construct_length, width-slot3_offset+(slot_dia/2)) * millimeter
-        });
-        skLineSegment(base_sketch, "line3_bottom", {
-                "start" : vector(width-side_offset, width-slot3_offset-(slot_dia/2)) * millimeter,
-                "end" : vector(width-side_offset-slot3_construct_length, width-slot3_offset-(slot_dia/2)) * millimeter
-        });
-        skArc(base_sketch, "slot3_arc_left", {
-                "start" : vector(width-side_offset-slot3_construct_length, width-slot3_offset-(slot_dia/2)) * millimeter,
-                "mid" : vector(width-side_offset-(slot3_construct_length+(slot_dia/2)), width-slot3_offset) * millimeter,
-                "end" : vector(width-side_offset-slot3_construct_length, width-slot3_offset+(slot_dia/2)) * millimeter
-        });
-        skArc(base_sketch, "slot3_arc_right", {
-                "start" : vector(width-side_offset, width-slot3_offset-(slot_dia/2)) * millimeter,
-                "mid" : vector(width-side_offset+(slot_dia/2), width-slot3_offset) * millimeter,
-                "end" : vector(width-side_offset, width-slot3_offset+(slot_dia/2)) * millimeter
-        });
-        // Here sketch the mirror slots
-        skLineSegment(base_sketch, "line1_mirror_left", {
-                "start" : vector(slot1_offset-(slot_dia/2), side_offset) * millimeter,
-                "end" : vector(slot1_offset-(slot_dia/2), side_offset+slot1_construct_length) * millimeter
-        });
-        skLineSegment(base_sketch, "line1_mirror_right", {
-                "start" : vector(slot1_offset-(slot_dia/2)+slot_dia, side_offset) * millimeter,
-                "end" : vector(slot1_offset-(slot_dia/2)+slot_dia, side_offset+slot1_construct_length) * millimeter
-        });
-        skArc(base_sketch, "slot1_arc_mirror_bot", {
-                "start" : vector(slot1_offset-(slot_dia/2), side_offset) * millimeter,
-                "mid" : vector(slot1_offset-(slot_dia/2)+(slot_dia/2), side_offset-(slot_dia/2)) * millimeter,
-                "end" : vector(slot1_offset-(slot_dia/2)+slot_dia, side_offset) * millimeter
-        });
-        skArc(base_sketch, "slot1_arc_mirror_top", {
-                "start" : vector(slot1_offset-(slot_dia/2), side_offset+slot1_construct_length) * millimeter,
-                "mid" : vector(slot1_offset-(slot_dia/2)+(slot_dia/2), side_offset+slot1_construct_length+(slot_dia/2)) * millimeter,
-                "end" : vector(slot1_offset-(slot_dia/2)+slot_dia, side_offset+slot1_construct_length) * millimeter
-        });
-        skLineSegment(base_sketch, "line2_mirror_left", {
-                "start" : vector(slot2_offset-(slot_dia/2), side_offset) * millimeter,
-                "end" : vector(slot2_offset-(slot_dia/2), side_offset+slot2_construct_length) * millimeter
-        });
-        skLineSegment(base_sketch, "line2_mirror_right", {
-                "start" : vector(slot2_offset-(slot_dia/2)+slot_dia, side_offset) * millimeter,
-                "end" : vector(slot2_offset-(slot_dia/2)+slot_dia, side_offset+slot2_construct_length) * millimeter
-        });
-        skArc(base_sketch, "slot2_arc_mirror_bot", {
-                "start" : vector(slot2_offset-(slot_dia/2), side_offset) * millimeter,
-                "mid" : vector(slot2_offset-(slot_dia/2)+(slot_dia/2), side_offset-(slot_dia/2)) * millimeter,
-                "end" : vector(slot2_offset-(slot_dia/2)+slot_dia, side_offset) * millimeter
-        });
-        skArc(base_sketch, "slot2_arc_mirror_top", {
-                "start" : vector(slot2_offset-(slot_dia/2), side_offset+slot2_construct_length) * millimeter,
-                "mid" : vector(slot2_offset-(slot_dia/2)+(slot_dia/2), side_offset+slot2_construct_length+(slot_dia/2)) * millimeter,
-                "end" : vector(slot2_offset-(slot_dia/2)+slot_dia, side_offset+slot2_construct_length) * millimeter
-        });
-        skLineSegment(base_sketch, "line3_mirror_left", {
-                "start" : vector(slot3_offset-(slot_dia/2), side_offset) * millimeter,
-                "end" : vector(slot3_offset-(slot_dia/2), side_offset+slot3_construct_length) * millimeter
-        });
-        skLineSegment(base_sketch, "line3_mirror_right", {
-                "start" : vector(slot3_offset-(slot_dia/2)+slot_dia, side_offset) * millimeter,
-                "end" : vector(slot3_offset-(slot_dia/2)+slot_dia, side_offset+slot3_construct_length) * millimeter
-        });
-        skArc(base_sketch, "slot3_arc_mirror_bot", {
-                "start" : vector(slot3_offset-(slot_dia/2), side_offset) * millimeter,
-                "mid" : vector(slot3_offset-(slot_dia/2)+(slot_dia/2), side_offset-(slot_dia/2)) * millimeter,
-                "end" : vector(slot3_offset-(slot_dia/2)+slot_dia, side_offset) * millimeter
-        });
-        skArc(base_sketch, "slot3_arc_mirror_top", {
-                "start" : vector(slot3_offset-(slot_dia/2), side_offset+slot3_construct_length) * millimeter,
-                "mid" : vector(slot3_offset-(slot_dia/2)+(slot_dia/2), side_offset+slot3_construct_length+(slot_dia/2)) * millimeter,
-                "end" : vector(slot3_offset-(slot_dia/2)+slot_dia, side_offset+slot3_construct_length) * millimeter
-        });
-        skSolve(base_sketch);    
-    } 
+    }
+
+
