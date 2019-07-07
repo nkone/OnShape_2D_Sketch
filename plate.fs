@@ -6,7 +6,7 @@
 #    By: phtruong <marvin@42.fr>                    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2019/07/07 16:38:10 by phtruong          #+#    #+#              #
-#    Updated: 2019/07/07 16:38:19 by phtruong         ###   ########.fr        #
+#    Updated: 2019/07/07 16:44:17 by phtruong         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -77,6 +77,7 @@ export const myFeature = defineFeature(function(context is Context, id is Id, de
     ** [slotDia] is slot diameter for all slots
     ** Default unit: millimeter
     ** Functionality: Changes in FeatureScript allows faster visualization than changing variables in normal sketch
+	** Return: NULL
     */
     function sketchBase(context is Context, id is Id, width is number, offset is number, sideOffset is number, slotDia is number)
     {
@@ -122,6 +123,7 @@ export const myFeature = defineFeature(function(context is Context, id is Id, de
     ** [idx] is index for slot number
     ** Default unit: millimeter
     ** Functionality: Can be resuse to draw mirror slots across a 45 degree diagonal offset
+	** Return: NULL
     */
     function sketchSlot(context is Context, id is Id, slot is Sketch, width is number, offsetX is number, slotOffset is number, slotDia is number, sideOffset is number, idx is number)
     {
