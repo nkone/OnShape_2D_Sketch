@@ -5,8 +5,8 @@
 #                                                     +:+ +:+         +:+      #
 #    By: phtruong <marvin@42.fr>                    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2019/07/07 16:28:45 by phtruong          #+#    #+#              #
-#    Updated: 2019/07/07 16:29:22 by phtruong         ###   ########.fr        #
+#    Created: 2019/07/07 16:38:10 by phtruong          #+#    #+#              #
+#    Updated: 2019/07/07 16:38:19 by phtruong         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -126,47 +126,45 @@ export const myFeature = defineFeature(function(context is Context, id is Id, de
     function sketchSlot(context is Context, id is Id, slot is Sketch, width is number, offsetX is number, slotOffset is number, slotDia is number, sideOffset is number, idx is number)
     {
         var constructLength is number= constructionLength(width, offsetX, slotOffset, slotDia, sideOffset);
-        skLineSegment(slot, "slot_construction" ~ idx, {
+        skLineSegment(slot, "slotConstruction" ~ idx, {
                 "start" : vector(width-sideOffset, width-slotOffset) * millimeter,
                 "end" : vector(width-sideOffset-constructLength, width-slotOffset) * millimeter,
                 "construction" : true
         });
-        skLineSegment(slot, "line_bottom" ~ idx, {
+        skLineSegment(slot, "lineBottom" ~ idx, {
                 "start" : vector(width-sideOffset, width-(slotOffset-(slotDia/2))) * millimeter,
                 "end" : vector(width-sideOffset-constructLength, width-(slotOffset-(slotDia/2))) * millimeter
         });
-        skLineSegment(slot, "line_top" ~ idx, {
+        skLineSegment(slot, "lineTop" ~ idx, {
                 "start" : vector(width-sideOffset, width-(slotOffset+(slotDia/2))) * millimeter,
                 "end" : vector(width-sideOffset-constructLength, width-(slotOffset+(slotDia/2))) * millimeter
         });
-        skArc(slot, "slot_arc_left" ~ idx, {
+        skArc(slot, "slotArcLeft" ~ idx, {
                 "start" : vector(width-sideOffset-constructLength, width-(slotOffset-(slotDia/2))) * millimeter,
                 "mid" : vector(width-sideOffset-(constructLength+(slotDia/2)), width-slotOffset) * millimeter,
                 "end" : vector(width-sideOffset-constructLength, width-(slotOffset+(slotDia/2))) * millimeter
         });
-        skArc(slot, "slot_arc_right" ~ idx, {
+        skArc(slot, "slotArcRight" ~ idx, {
                 "start" : vector(width-sideOffset, width-(slotOffset-(slotDia/2))) * millimeter,
                 "mid" : vector(width-sideOffset+(slotDia/2), width-slotOffset) * millimeter,
                 "end" : vector(width-sideOffset, width-(slotOffset+(slotDia/2))) * millimeter
         });
-        skLineSegment(slot, "line_mirror_left" ~ idx, {
+        skLineSegment(slot, "lineMirrorLeft" ~ idx, {
                 "start" : vector(slotOffset-(slotDia/2), sideOffset) * millimeter,
                 "end" : vector(slotOffset-(slotDia/2), sideOffset+constructLength) * millimeter
         });
-        skLineSegment(slot, "line_mirror_right" ~ idx, {
+        skLineSegment(slot, "lineMirrorRight" ~ idx, {
                 "start" : vector(slotOffset-(slotDia/2)+slotDia, sideOffset) * millimeter,
                 "end" : vector(slotOffset-(slotDia/2)+slotDia, sideOffset+constructLength) * millimeter
         });
-        skArc(slot, "slot_arc_mirror_bot" ~ idx, {
+        skArc(slot, "slotArcMirrorBot" ~ idx, {
                 "start" : vector(slotOffset-(slotDia/2), sideOffset) * millimeter,
                 "mid" : vector(slotOffset-(slotDia/2)+(slotDia/2), sideOffset-(slotDia/2)) * millimeter,
                 "end" : vector(slotOffset-(slotDia/2)+slotDia, sideOffset) * millimeter
         });
-        skArc(slot, "slot_arc_mirror_top" ~ idx, {
+        skArc(slot, "slotArcMirrorTop" ~ idx, {
                 "start" : vector(slotOffset-(slotDia/2), sideOffset+constructLength) * millimeter,
                 "mid" : vector(slotOffset-(slotDia/2)+(slotDia/2), sideOffset+constructLength+(slotDia/2)) * millimeter,
                 "end" : vector(slotOffset-(slotDia/2)+slotDia, sideOffset+constructLength) * millimeter
         });
-    }
-
-
+    } 
